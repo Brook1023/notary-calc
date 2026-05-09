@@ -3,530 +3,1007 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>公證保存年限計算機</title>
+    <title>公證訊息例稿產生器</title>
+    <!-- 載入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 載入 React 與 ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- 載入 Babel 以在瀏覽器中編譯 JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
-        /* 自定義樣式調整 */
-        body { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; }
-        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; }
     </style>
 </head>
-<body class="min-h-screen bg-slate-50 py-8 px-4 text-slate-800">
+<body class="bg-slate-50 text-slate-800">
+    <div id="root"></div>
 
-    <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200 flex flex-col min-h-[800px]">
-        
-        <!-- Header -->
-        <div class="bg-slate-800 p-6 text-white flex items-center justify-between flex-shrink-0">
-            <div>
-                <h1 class="text-2xl font-bold tracking-wide flex items-center gap-2">
-                    <!-- Calculator Icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
-                    公證保存年限計算機
-                </h1>
-                <p class="text-slate-400 text-sm mt-1">民間公證人專用工具</p>
-            </div>
-        </div>
+    <script type="text/babel">
+        const { useState, useMemo } = React;
 
-        <div class="flex flex-col flex-grow">
-            
-            <!-- 上方：輸入區 -->
-            <div class="p-6 space-y-8 border-b border-slate-200">
-                
-                <!-- 1. 基礎日期設定 -->
-                <section>
-                    <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                        <!-- FileText Icon -->
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>
-                        案件日期設定
-                        <span class="text-xs font-normal text-slate-400 normal-case ml-1">(日期皆為民國)</span>
-                    </h3>
-                    <div class="space-y-4">
-                        <!-- 收案日期 -->
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">收案日期</label>
-                            <input type="text" id="receiveDate" placeholder="例：113/01/01" class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border">
-                        </div>
-                        <!-- 結案日期 -->
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">結案日期</label>
-                            <input type="text" id="closeDate" placeholder="例：113/01/01" class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border">
-                        </div>
-                        <!-- 歸檔日期 -->
-                        <div class="relative bg-yellow-50/50 -mx-2 px-2 py-2 rounded-md">
-                            <label class="block text-sm font-medium text-slate-700 mb-1">歸檔日期</label>
-                            <input type="text" id="archiveDate" placeholder="例：113/01/01" class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border">
-                        </div>
-                    </div>
-                </section>
+        // --- SVG 圖示組件 ---
+        const CopyIcon = ({ className = "w-4 h-4" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+        );
 
-                <!-- 2. 類別選擇 -->
-                <section>
-                    <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>
-                        第一層：案件種類
-                    </h3>
-                    <div class="grid grid-cols-1 gap-3" id="categoryContainer">
-                        <!-- Options generated via JS or hardcoded below -->
-                        
-                        <!-- Option 1 -->
-                        <label class="flex items-start p-3 border rounded-lg cursor-pointer transition-all select-none hover:bg-slate-50 border-slate-200" id="label-cat1">
-                            <div class="flex h-5 items-center mt-0.5">
-                                <input type="radio" name="category" value="1" class="h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500" checked>
-                            </div>
-                            <div class="ml-3 text-sm flex-1">
-                                <span class="font-medium block text-slate-900" id="title-cat1">(一) 永久類（包括公證及認證）</span>
-                                <div class="mt-1.5 space-y-1 text-slate-500" id="desc-cat1">
-                                    <div class="text-xs border-l-2 border-slate-300/50 pl-2 leading-tight">案由物權：不動產物權得喪變更</div>
-                                    <div class="text-xs border-l-2 border-slate-300/50 pl-2 leading-tight">案由親屬：婚姻、認領、收養、其他涉及親屬關係</div>
-                                    <div class="text-xs border-l-2 border-slate-300/50 pl-2 leading-tight">案由繼承：遺囑或遺產處分行為</div>
-                                </div>
-                            </div>
-                        </label>
+        const CheckCircleIcon = ({ className = "w-4 h-4 text-green-500" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+        );
 
-                        <!-- Option 2 -->
-                        <label class="flex items-start p-3 border rounded-lg cursor-pointer transition-all select-none hover:bg-slate-50 border-slate-200" id="label-cat2">
-                            <div class="flex h-5 items-center mt-0.5">
-                                <input type="radio" name="category" value="2" class="h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500">
-                            </div>
-                            <div class="ml-3 text-sm flex-1">
-                                <span class="font-medium block text-slate-900" id="title-cat2">(二) 其他公證類</span>
-                                <div class="mt-1.5 space-y-1 text-slate-500" id="desc-cat2">
-                                    <div class="text-xs border-l-2 border-slate-300/50 pl-2 leading-tight">案由債權：買賣、租賃、借貸、委任授權、其他</div>
-                                    <div class="text-xs border-l-2 border-slate-300/50 pl-2 leading-tight">案由其他</div>
-                                </div>
-                            </div>
-                        </label>
+        // --- 公證常數 ---
+        const DOC_TYPES = [
+            { id: 'lease', label: '租賃' },
+            { id: 'loan', label: '借貸' },
+            { id: 'will', label: '遺囑' },
+            { id: 'guardianship', label: '意定監護' },
+            { id: 'other', label: '其他' }
+        ];
 
-                        <!-- Option 3 -->
-                        <label class="flex items-start p-3 border rounded-lg cursor-pointer transition-all select-none hover:bg-slate-50 border-slate-200" id="label-cat3">
-                            <div class="flex h-5 items-center mt-0.5">
-                                <input type="radio" name="category" value="3" class="h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500">
-                            </div>
-                            <div class="ml-3 text-sm flex-1">
-                                <span class="font-medium block text-slate-900" id="title-cat3">(三) 其他認證類</span>
-                                <div class="mt-1.5 space-y-1 text-slate-500" id="desc-cat3">
-                                    <div class="text-xs border-l-2 border-slate-300/50 pl-2 leading-tight">案由單身：單身大陸、單身其他</div>
-                                    <div class="text-xs border-l-2 border-slate-300/50 pl-2 leading-tight">案由債權：買賣、租賃、借貸、委任授權、其他</div>
-                                    <div class="text-xs border-l-2 border-slate-300/50 pl-2 leading-tight">案由私文書認證其他</div>
-                                    <div class="text-xs border-l-2 border-slate-300/50 pl-2 leading-tight">案由公文書</div>
-                                    <div class="text-xs border-l-2 border-slate-300/50 pl-2 leading-tight">案由繕影本</div>
-                                    <div class="text-xs border-l-2 border-slate-300/50 pl-2 leading-tight">案由翻譯本</div>
-                                    <div class="text-xs border-l-2 border-slate-300/50 pl-2 leading-tight">案由其他</div>
-                                </div>
-                            </div>
-                        </label>
+        const PERSON_TYPES_1 = [
+            { id: 'principal', label: '本人' },
+            { id: 'companyRep', label: '公司代表人' },
+            { id: 'agent', label: '代理人' },
+            { id: 'companyAgent', label: '公司代理人' }
+        ];
 
-                        <!-- Option 4 -->
-                        <label class="flex items-start p-3 border rounded-lg cursor-pointer transition-all select-none hover:bg-slate-50 border-slate-200" id="label-cat4">
-                            <div class="flex h-5 items-center mt-0.5">
-                                <input type="radio" name="category" value="4" class="h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500">
-                            </div>
-                            <div class="ml-3 text-sm flex-1">
-                                <span class="font-medium block text-slate-900" id="title-cat4">(四) 未作成類（包括公證及認證）</span>
-                            </div>
-                        </label>
-                    </div>
-                </section>
+        const PERSON_TYPES_2 = [
+            ...PERSON_TYPES_1,
+            { id: 'none', label: '無' }
+        ];
 
-                <!-- 3. 特殊條件 (動態顯示) -->
-                <section id="specialConditionSection" class="hidden bg-blue-50 p-4 rounded-lg border border-blue-100 fade-in">
-                    <div class="mb-2">
-                        <p class="text-sm text-slate-700 font-medium mb-1">第二層：是否為繼續性法律行為？</p>
-                        <p class="text-xs text-slate-500 mb-3 leading-relaxed">
-                            註：有確定履行期限、定有存續期間的法律行為，自期間屆滿翌年1月1日起算。
-                        </p>
-                        
-                        <div class="flex gap-4">
-                            <label class="flex items-center gap-2 cursor-pointer text-sm">
-                                <input type="radio" name="isContinuous" value="false" class="w-4 h-4 text-blue-600 focus:ring-blue-500" checked>
-                                <span>非繼續性 (預設)</span>
-                            </label>
-                            <label class="flex items-center gap-2 cursor-pointer text-sm">
-                                <input type="radio" name="isContinuous" value="true" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
-                                <span class="font-semibold text-blue-700">繼續性</span>
-                            </label>
-                        </div>
-                    </div>
+        const ADDITIONAL_ATTENDEES = [
+            { id: 'guarantor', label: '連帶保證人本人', ruleKey: 'principal' },
+            { id: 'witness', label: '見證人本人', ruleKey: 'principal' },
+            { id: 'interpreter', label: '通譯本人', ruleKey: 'principal' }
+        ];
 
-                    <div id="expirationDateContainer" class="hidden mt-4 pt-4 border-t border-blue-200">
-                        <label class="block text-sm font-medium text-slate-700 mb-1">
-                            期限屆至日期 <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text" id="expirationDate" placeholder="例：118/12/31" class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border">
-                        <p class="text-xs text-blue-600 mt-1">繼續性法律行為以此日為起算基準</p>
-                    </div>
-                </section>
-
-            </div>
-
-            <!-- 下方：結果輸出區 -->
-            <div class="bg-slate-100 p-6 flex flex-col">
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                    <div class="flex items-center justify-between border-b pb-4 mb-4">
-                        <h2 class="text-lg font-bold text-slate-800">
-                            計算結果
-                        </h2>
-                        <button id="btnCopy" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors border border-blue-200">
-                            <span id="iconCopy">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                            </span>
-                            <span id="iconCheck" class="hidden">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                            </span>
-                            <span id="textCopy">複製結果</span>
-                        </button>
-                    </div>
-
-                    <!-- 純文字結果顯示區 -->
-                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 font-mono text-sm leading-relaxed text-slate-800">
-                        <div class="space-y-3">
-                            <div class="grid grid-cols-[100px_1fr] gap-2">
-                                <span class="text-slate-500 select-none">收案日期</span>
-                                <span class="font-normal text-black" id="res-receive"></span>
-                            </div>
-                            
-                            <div class="grid grid-cols-[100px_1fr] gap-2">
-                                <span class="text-slate-500 select-none">結案日期</span>
-                                <span class="font-normal text-black" id="res-close"></span>
-                            </div>
-                            
-                            <div class="grid grid-cols-[100px_1fr] gap-2">
-                                <span class="text-slate-500 font-bold select-none">歸檔日期</span>
-                                <span class="font-normal text-black" id="res-archive"></span>
-                            </div>
-                            
-                            <div id="res-expiration-row" class="hidden grid grid-cols-[100px_1fr] gap-2">
-                                <span class="select-none text-slate-500">期限屆至</span>
-                                <span class="font-normal text-black" id="res-expiration"></span>
-                            </div>
-
-                            <div class="my-2 border-t border-slate-200 border-dashed"></div>
-
-                            <div class="grid grid-cols-[100px_1fr] gap-2">
-                                <span class="text-slate-500 select-none">保存年限起算</span>
-                                <span class="font-normal text-black" id="res-start"></span>
-                            </div>
-                            
-                            <div class="grid grid-cols-[100px_1fr] gap-2">
-                                <span class="text-slate-500 select-none">保存年限</span>
-                                <span class="font-normal text-black" id="res-retention"></span>
-                            </div>
-                            
-                            <div class="grid grid-cols-[100px_1fr] gap-2">
-                                <span class="text-slate-500 select-none">預定銷燬日期</span>
-                                <span class="font-normal text-black" id="res-destroy"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
-        <!-- Footer Link -->
-        <div class="bg-slate-50 p-4 border-t border-slate-200 text-center flex-shrink-0">
-            <a href="https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=A0030180" target="_blank" rel="noreferrer" class="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-blue-600 hover:underline">
-                參考法規 公證文書簿冊保存及銷燬規則
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
-            </a>
-        </div>
-    </div>
-
-    <!-- JavaScript Logic -->
-    <script>
-        // --- Helpers ---
-        function getTodayROCString() {
-            const date = new Date();
-            const rocYear = date.getFullYear() - 1911;
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${rocYear}/${month}/${day}`;
-        }
-
-        function parseYearFromText(text) {
-            if (!text) return 0;
-            const year = parseInt(text);
-            return isNaN(year) ? 0 : year;
-        }
-
-        function formatUserDate(text) {
-            if (!text) return '';
-            if (text.includes('年')) return text;
-            const parts = text.split(/[\/\.\-\s]+/);
-            if (parts.length === 3) {
-                return `${parts[0]}年${parts[1]}月${parts[2]}日`;
-            }
-            return text;
-        }
-
-        // --- State ---
-        const state = {
-            receiveDate: getTodayROCString(),
-            closeDate: getTodayROCString(),
-            archiveDate: getTodayROCString(),
-            category: '1',
-            isContinuous: false,
-            expirationDate: '',
-            result: {
-                startDateStr: '',
-                retentionStr: '',
-                destructionDateStr: '',
-                status: 'ready'
-            }
+        const TYPE_TITLES = {
+            lease: ['出租人', '承租人'],
+            loan: ['貸與人', '借用人'],
+            guardianship: ['委任人', '受任人'],
+            will: ['遺囑人', ''],
+            other: ['', '']
         };
 
-        // --- DOM Elements ---
-        const elReceive = document.getElementById('receiveDate');
-        const elClose = document.getElementById('closeDate');
-        const elArchive = document.getElementById('archiveDate');
-        const elExpiration = document.getElementById('expirationDate');
-        const elCategoryRadios = document.querySelectorAll('input[name="category"]');
-        const elContinuousRadios = document.querySelectorAll('input[name="isContinuous"]');
-        const elSpecialSection = document.getElementById('specialConditionSection');
-        const elExpirationContainer = document.getElementById('expirationDateContainer');
-        const btnCopy = document.getElementById('btnCopy');
-        
-        // Output Elements
-        const outReceive = document.getElementById('res-receive');
-        const outClose = document.getElementById('res-close');
-        const outArchive = document.getElementById('res-archive');
-        const outExpirationRow = document.getElementById('res-expiration-row');
-        const outExpiration = document.getElementById('res-expiration');
-        const outStart = document.getElementById('res-start');
-        const outRetention = document.getElementById('res-retention');
-        const outDestroy = document.getElementById('res-destroy');
+        const TYPE_DOCS = {
+            lease: '建物權狀正本、建物稅單正本',
+            loan: '收付款項存摺正本、匯款單等憑據正本',
+            guardianship: '委任人及受任人戶籍謄本(記事不省略)、會同開具財產清冊之人身分證影本(若有指定)',
+            will: '戶政事務所申請謄本(遺囑人戶籍謄本、每一位現存繼承人戶籍謄本、已往生繼承人除戶謄本)、國稅局或稅捐處申請財產清單、建物權狀正本、土地權狀正本、存摺正本',
+            other: ''
+        };
 
-        // --- Initialization ---
-        function init() {
-            // Set Initial Values
-            elReceive.value = state.receiveDate;
-            elClose.value = state.closeDate;
-            elArchive.value = state.archiveDate;
-            elExpiration.value = state.expirationDate;
+        const PERSON_DOC_RULES = {
+            principal: '攜帶身分證正本及印章',
+            companyRep: '攜帶最新公司設立(變更)登記事項表正本、代表人身分證正本、公司大小章',
+            agent: '攜帶授權書(蓋印鑑章)、本人身分證影本、本人印鑑證明、本人印鑑章(非必要)、代理人身分證正本及印章',
+            companyAgent: '攜帶最新公司設立(變更)登記事項表抄錄本正本(向主管機關或線上申請抄錄本，要加蓋公司大小章，不要自己影印)、公司代表人身分證影本、授權書(蓋登記事項表上公司大小章)、公司大小章(非必要)、代理人身分證正本及印章'
+        };
 
-            // Bind Events
-            elReceive.addEventListener('input', (e) => { state.receiveDate = e.target.value; update(); });
-            elClose.addEventListener('input', (e) => { state.closeDate = e.target.value; update(); });
-            elArchive.addEventListener('input', (e) => { state.archiveDate = e.target.value; update(); });
-            elExpiration.addEventListener('input', (e) => { state.expirationDate = e.target.value; update(); });
+        const FEE_RULES = {
+            lease: '根據房屋現值(稅單寫的)，與租金總額(租約寫的)比較，較高者加上押金，按公證費用標準表收費',
+            loan: '依借貸本息總額，按公證費用標準表收費',
+            guardianship: '通常依10年份報酬總額，按公證費用標準表收費，若未約定報酬，預估費用1000元',
+            will: '依財產清單，按公證費用標準表收費',
+            other: ''
+        };
 
-            elCategoryRadios.forEach(radio => {
-                radio.addEventListener('change', (e) => {
-                    if(e.target.checked) {
-                        state.category = e.target.value;
-                        updateUIStyles(); // Radio styles
-                        update();
-                    }
-                });
-            });
+        const QUESTIONS_RULES = {
+            lease: `1.您是房東還是房客? 
+2.租約是營業或住宅?
+3.房東房客是否都是個人(非公司)?
+4.租約使用公證人範本或自備?
+5.為計算公證費用請提供「租金、租期、押金」並傳送最近一期房屋稅單過來`,
+            loan: `1.請提供借款本金(金額)、借款期間(借款開始年月日)、還款期限(年)、約定利率(年息%)
+2.將貸與人收受還款的帳戶存摺封面傳送過來。
+3.常見交付借款方式是公證結束後，貸與人前往銀行臨櫃匯款，再返回公證人事務所，將匯款單等憑據提供給公證人，公證人才把公證書正本交付給雙方`,
+            guardianship: `1.雙方必須神智清楚、能溝通、能簽名?
+2.填妥意定監護契約範本後傳送給公證人確認`,
+            will: `1.遺囑人姓名? 中文聽說讀寫及精神皆正常? 有辦法親自持筆書寫遺囑全部內容?
+2.遺囑人有無配偶? 存歿?
+3.遺囑人有幾名子女? 存歿?
+4.(若遺囑人子女先逝) 逝世子女有幾名子女(孫輩)? 存歿?
+5.遺囑人父母存歿?
+6.遺囑人有幾名兄弟姐妹? 存歿?
+7.遺囑人祖父母存歿?
+8.遺囑人想分配的財產?`,
+            other: ``
+        };
 
-            elContinuousRadios.forEach(radio => {
-                radio.addEventListener('change', (e) => {
-                    if(e.target.checked) {
-                        state.isContinuous = e.target.value === 'true';
-                        update();
-                    }
-                });
-            });
+        // --- 認證常數 ---
+        const CERT_TYPES = [
+            { id: 'single', label: '單身' },
+            { id: 'poa', label: '委託授權' },
+            { id: 'work', label: '工作證明' },
+            { id: 'degree', label: '學位證書及成績單' },
+            { id: 'police', label: '良民證' },
+            { id: 'household', label: '戶籍謄本' },
+            { id: 'passport', label: '護照(請先簽名)' },
+            { id: 'license', label: '駕照' },
+            { id: 'idcard', label: '身分證' },
+            { id: 'translation', label: '翻譯' },
+            { id: 'other', label: '其他' }
+        ];
 
-            btnCopy.addEventListener('click', copyToClipboard);
+        const CERT_REGIONS = [
+            { id: 'none', label: '無 / 國內使用' },
+            { id: 'mainland', label: '大陸' },
+            { id: 'other_country', label: '其他國家' }
+        ];
 
-            updateUIStyles();
-            update();
-        }
+        const CERT_QUESTIONS = [
+            "【詢問】文件類型? 數量?",
+            "【詢問】文件使用地區? 用途?",
+            "【注意】查證需要時間，當下無法取件，會再電話通知取件。",
+            "文件格式、內容、數量等，請逕向收受文件單位詢問。",
+            "請先將文件拍照或掃描傳送給公證人，重要個資可以用手指或物品擋住。"
+        ];
 
-        // --- Core Logic ---
-        function calculateRetention() {
-            // Check Missing Input
-            if ((state.category === '2' || state.category === '3') && state.isContinuous && !state.expirationDate) {
-                state.result.status = 'missing_input';
-            } else {
-                state.result.status = 'success';
-            }
+        // --- 預約與轉介常數 ---
+        const BOOKING_INFO_LIST = [
+            "林昱朋公證人事務所工作時間平日10-17，地址新北市永和區永和路二段57號7樓（靠近頂溪捷運站1號出口中興街口），電話 0277296396 。",
+            "請轉帳至 永豐銀行（807）營業部（1217）帳號 20201800381055 帳戶 戶名林昱朋。",
+            "統編：61377262、抬頭：臺灣新北地方法院所屬民間公證人林昱朋事務所"
+        ];
 
-            let retentionStr = '';
-            let startYear = 0;
-            let destructionDateStr = '';
+        const REFERRAL_INFO_LIST = [
+            `您好，建議您前往新北地院公證處辦理，免預約，現場抽號碼牌。\n\n臺灣新北地方法院 公證處\n服務時間8:30~12:30、13:30~17:30\n電話02-22616714分機 5047或5048\n地址 新北市土城區青雲路152號6樓(家樂福樓上)\n停車 家樂福土城店停車場、金城立體停車場\n\n從 林昱朋公證人事務所 到 新北地院公證處 方式：搭乘706路公車 從中興街口上車 往三峽方向 在 臺灣新北地方法院（金城）下車。`,
+            `您好，您的情況建議向法院聲請「監護宣告」或「輔助宣告」，請在上班時間聯繫新北地院訴訟輔導科詢問辦理方式，謝謝。\n\n臺灣新北地方法院 訴訟輔導科\n電話（02）2261-6714\n轉分機1001或1002或1003號\n地址新北市土城區金城路2段249號`
+        ];
+
+        const formatWithNewlines = (text) => text.split('、').join('\n');
+
+        function App() {
+            const [mainMode, setMainMode] = useState('notarize'); // 'notarize' | 'certify' | 'booking' | 'fee'
+
+            // -- 公證狀態 --
+            const [docType, setDocType] = useState('lease');
+            const [person1, setPerson1] = useState('principal');
+            const [person2, setPerson2] = useState('none');
+            const [additionalSelected, setAdditionalSelected] = useState({});
+            const [otherDocs, setOtherDocs] = useState('');
+            const [feeMode, setFeeMode] = useState('default');
+            const [manualFee, setManualFee] = useState('');
+
+            // -- 認證狀態 --
+            const [certType, setCertType] = useState('single');
+            const [certPerson, setCertPerson] = useState('principal');
+            const [certRegion, setCertRegion] = useState('none');
+            const [certOtherDocs, setCertOtherDocs] = useState('');
+            const [certFee, setCertFee] = useState('');
+
+            // -- 預約狀態 --
+            const [bookingDateInput, setBookingDateInput] = useState('');
+
+            // -- 費用狀態 --
+            const [houseValue, setHouseValue] = useState('');
+            const [rentInputType, setRentInputType] = useState('auto'); // 'auto' | 'direct'
+            const [monthlyRent, setMonthlyRent] = useState('');
+            const [leaseTerm, setLeaseTerm] = useState('');
+            const [totalRentInput, setTotalRentInput] = useState('');
+            const [depositInput, setDepositInput] = useState('');
+
+            // -- 複製狀態 --
+            const [copyStatus1, setCopyStatus1] = useState(false);
+            const [copyStatus2, setCopyStatus2] = useState(false);
+            const [copiedLineIndex, setCopiedLineIndex] = useState(null);
             
-            const archiveYear = parseYearFromText(state.archiveDate);
-            const expirationYear = parseYearFromText(state.expirationDate);
+            // 預約與轉介複製狀態
+            const [copyBookingConfirm, setCopyBookingConfirm] = useState(false);
+            const [copiedBookingInfoIndex, setCopiedBookingInfoIndex] = useState(null);
+            const [copiedReferralIndex, setCopiedReferralIndex] = useState(null);
 
-            if (state.category === '1') {
-                // 永久類
-                retentionStr = '永久';
-                startYear = archiveYear + 1;
-                destructionDateStr = '無';
-            } else if (state.category === '4') {
-                // 未作成類
-                retentionStr = '5年';
-                startYear = archiveYear + 1;
-                const destroyYear = startYear + 5;
-                destructionDateStr = `${destroyYear}年01月01日`;
-            } else {
-                // 其他公證/認證
-                const isNotary = state.category === '2';
-                const years = isNotary ? 15 : 10;
-                retentionStr = `${years}年`;
+            // 費用模式複製狀態
+            const [copyFeeResult, setCopyFeeResult] = useState(false);
 
-                if (state.isContinuous) {
-                    startYear = expirationYear + 1;
-                } else {
-                    startYear = archiveYear + 1;
-                }
-
-                const destroyYear = startYear + years;
-                destructionDateStr = `${destroyYear}年01月01日`;
-            }
-
-            state.result.startDateStr = `${startYear}年`;
-            state.result.retentionStr = retentionStr;
-            state.result.destructionDateStr = destructionDateStr;
-        }
-
-        function update() {
-            calculateRetention();
-            render();
-        }
-
-        // --- Rendering ---
-        function render() {
-            // 1. Visibility Toggles
-            const showContinuousOption = state.category === '2' || state.category === '3';
-            const showExpirationInput = showContinuousOption && state.isContinuous;
-
-            if (showContinuousOption) {
-                elSpecialSection.classList.remove('hidden');
-            } else {
-                elSpecialSection.classList.add('hidden');
-            }
-
-            if (showExpirationInput) {
-                elExpirationContainer.classList.remove('hidden');
-                outExpirationRow.classList.remove('hidden');
-                // Check missing status styling if needed
-                if(!state.expirationDate) {
-                    elExpiration.classList.add('border-red-300', 'ring-1', 'ring-red-200');
-                } else {
-                    elExpiration.classList.remove('border-red-300', 'ring-1', 'ring-red-200');
-                }
-            } else {
-                elExpirationContainer.classList.add('hidden');
-                outExpirationRow.classList.add('hidden');
-            }
-
-            // 2. Output Text
-            outReceive.textContent = formatUserDate(state.receiveDate);
-            outClose.textContent = formatUserDate(state.closeDate);
-            outArchive.textContent = formatUserDate(state.archiveDate);
-            outExpiration.textContent = formatUserDate(state.expirationDate);
-
-            if (state.result.status === 'missing_input') {
-                outStart.textContent = '---';
-                outDestroy.textContent = '---';
-            } else {
-                outStart.textContent = state.result.startDateStr;
-                outDestroy.textContent = state.result.destructionDateStr;
-            }
-            outRetention.textContent = state.result.retentionStr;
-        }
-
-        // --- Styling Utilities ---
-        function updateUIStyles() {
-            // Update Radio Button Selection Styles
-            ['1', '2', '3', '4'].forEach(id => {
-                const label = document.getElementById(`label-cat${id}`);
-                const title = document.getElementById(`title-cat${id}`);
-                const desc = document.getElementById(`desc-cat${id}`);
-                const isChecked = state.category === id;
-
-                if (isChecked) {
-                    label.className = "flex items-start p-3 border rounded-lg cursor-pointer transition-all select-none bg-blue-50 border-blue-500 ring-1 ring-blue-500";
-                    title.className = "font-medium block text-blue-900";
-                    if(desc) desc.className = "mt-1.5 space-y-1 text-blue-700";
-                } else {
-                    label.className = "flex items-start p-3 border rounded-lg cursor-pointer transition-all select-none hover:bg-slate-50 border-slate-200";
-                    title.className = "font-medium block text-slate-900";
-                    if(desc) desc.className = "mt-1.5 space-y-1 text-slate-500";
-                }
-            });
-        }
-
-        // --- Copy Function with Fallback ---
-        function copyToClipboard() {
-            const textToCopy = `收案日期 ${formatUserDate(state.receiveDate)}
-結案日期 ${formatUserDate(state.closeDate)}
-歸檔日期 ${formatUserDate(state.archiveDate)}
-保存年限起算 ${state.result.startDateStr}
-保存年限 ${state.result.retentionStr}
-預定銷燬日期 ${state.result.destructionDateStr}`;
-
-            // Show success UI
-            const showSuccess = () => {
-                const iconCopy = document.getElementById('iconCopy');
-                const iconCheck = document.getElementById('iconCheck');
-                const textCopy = document.getElementById('textCopy');
-
-                iconCopy.classList.add('hidden');
-                iconCheck.classList.remove('hidden');
-                textCopy.textContent = '已複製';
-                
-                // Add green style
-                btnCopy.classList.remove('text-blue-600', 'bg-blue-50', 'border-blue-200');
-                btnCopy.classList.add('text-green-600', 'bg-green-50', 'border-green-200');
-
-                setTimeout(() => {
-                    iconCopy.classList.remove('hidden');
-                    iconCheck.classList.add('hidden');
-                    textCopy.textContent = '複製結果';
-                    // Revert style
-                    btnCopy.classList.add('text-blue-600', 'bg-blue-50', 'border-blue-200');
-                    btnCopy.classList.remove('text-green-600', 'bg-green-50', 'border-green-200');
-                }, 2000);
+            const toggleAdditional = (id) => {
+                setAdditionalSelected(prev => ({ ...prev, [id]: !prev[id] }));
             };
 
-            // Modern API approach
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(textToCopy).then(showSuccess).catch(() => fallbackCopy(textToCopy, showSuccess));
-            } else {
-                fallbackCopy(textToCopy, showSuccess);
-            }
-        }
-
-        // Fallback for older browsers or non-secure contexts (iframe)
-        function fallbackCopy(text, successCallback) {
-            const textArea = document.createElement("textarea");
-            textArea.value = text;
-            
-            // Ensure textarea is not visible but part of DOM
-            textArea.style.position = "fixed";
-            textArea.style.left = "-9999px";
-            textArea.style.top = "0";
-            document.body.appendChild(textArea);
-            
-            textArea.focus();
-            textArea.select();
-            
-            try {
-                const successful = document.execCommand('copy');
-                if (successful) {
-                    successCallback();
-                } else {
-                    console.error('Fallback: Copy command failed');
+            // 處理八位數日期時間格式轉換 (預約模式)
+            const parsedBookingDateStr = useMemo(() => {
+                if (!/^\d{8}$/.test(bookingDateInput)) {
+                    return '[請輸入8位數字日期時間]';
                 }
-            } catch (err) {
-                console.error('Fallback: Oops, unable to copy', err);
-            }
-            
-            document.body.removeChild(textArea);
+                const month = parseInt(bookingDateInput.substring(0, 2), 10);
+                const day = parseInt(bookingDateInput.substring(2, 4), 10);
+                const hour = parseInt(bookingDateInput.substring(4, 6), 10);
+                const minute = bookingDateInput.substring(6, 8);
+                const currentYear = new Date().getFullYear();
+                const d = new Date(currentYear, month - 1, day);
+                const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+                
+                return `${currentYear}年${month}月${day}日星期${weekdays[d.getDay()]} ${hour}時${minute}分`;
+            }, [bookingDateInput]);
+
+            const outputBookingConfirmText = `（＊到七樓按電鈴＊）為您保留 ${parsedBookingDateStr} 的時間，本事務所在 新北市永和區永和路二段57號7樓 （豪泰大樓 威肯商務中心）電話 0277296396 若要取消請提早告知，謝謝。`;
+
+            // 處理費用計算邏輯 (費用模式)
+            const feeCalculationResult = useMemo(() => {
+                const vHouse = parseInt(houseValue) || 0;
+                let vTotalRent = 0;
+                let vDeposit = 0;
+
+                if (rentInputType === 'auto') {
+                    vTotalRent = (parseInt(monthlyRent) || 0) * (parseInt(leaseTerm) || 0);
+                    vDeposit = (parseInt(monthlyRent) || 0) * 2;
+                } else {
+                    vTotalRent = parseInt(totalRentInput) || 0;
+                    vDeposit = parseInt(depositInput) || 0;
+                }
+
+                const maxVal = Math.max(vHouse, vTotalRent);
+                const targetValue = maxVal + vDeposit;
+
+                let baseFee = 0;
+                let isError = false;
+
+                if (targetValue === 0) {
+                    baseFee = 0;
+                } else if (targetValue <= 200000) {
+                    baseFee = 1500;
+                } else if (targetValue <= 500000) {
+                    baseFee = 3000;
+                } else if (targetValue <= 1000000) {
+                    baseFee = 4500;
+                } else if (targetValue <= 2000000) {
+                    baseFee = 6000;
+                } else if (targetValue <= 5000000) {
+                    baseFee = 7500;
+                } else if (targetValue <= 10000000) {
+                    baseFee = 9000;
+                } else if (targetValue <= 20000000) {
+                    baseFee = 12000;
+                } else {
+                    isError = true;
+                }
+
+                let outputText = '';
+                if (isError) {
+                    outputText = "價額超過20,000,000元無法計算，請查閱公證費用標準表。";
+                } else {
+                    outputText = `【公證費用】\n本件房屋現值${vHouse}元，與租金總額${vTotalRent}元比較，較高者加上押金${vDeposit}元，本件價額${targetValue}元，按公證費用標準表收基本費用${baseFee}元。`;
+                }
+
+                return { vTotalRent, vDeposit, outputText, isError };
+            }, [houseValue, rentInputType, monthlyRent, leaseTerm, totalRentInput, depositInput]);
+
+
+            // 處理公證與認證的主輸出文字
+            const output1Text = useMemo(() => {
+                let result = '';
+
+                if (mainMode === 'notarize') {
+                    const titles = TYPE_TITLES[docType];
+                    const attendees = [];
+
+                    const p1Label = PERSON_TYPES_1.find(p => p.id === person1).label;
+                    attendees.push({
+                        name: `${titles[0]}${p1Label}`,
+                        ruleKey: person1
+                    });
+
+                    if (person2 !== 'none') {
+                        const p2Label = PERSON_TYPES_2.find(p => p.id === person2).label;
+                        attendees.push({
+                            name: `${titles[1]}${p2Label}`,
+                            ruleKey: person2
+                        });
+                    }
+
+                    ADDITIONAL_ATTENDEES.forEach(att => {
+                        if (additionalSelected[att.id]) {
+                            attendees.push({
+                                name: att.label,
+                                ruleKey: att.ruleKey
+                            });
+                        }
+                    });
+
+                    result += `【應到場人】\n`;
+                    result += attendees.map(a => a.name).join('\n') + '\n\n';
+
+                    result += `【應備文件】\n`;
+                    const tDocs = TYPE_DOCS[docType];
+                    if (tDocs) {
+                        result += formatWithNewlines(tDocs) + '\n\n';
+                    }
+
+                    const personDocs = attendees.map(att => {
+                        const ruleText = PERSON_DOC_RULES[att.ruleKey];
+                        return formatWithNewlines(`${att.name}${ruleText}`);
+                    });
+                    result += personDocs.join('\n\n') + '\n';
+
+                    if (otherDocs.trim()) {
+                        result += '\n' + otherDocs.trim() + '\n';
+                    }
+
+                    result += `\n【公證費用】\n`;
+                    if (feeMode === 'default') {
+                        const feeText = FEE_RULES[docType];
+                        if (feeText) result += feeText + '\n';
+                    } else {
+                        result += `預估公證費用新台幣${manualFee || ' '}元\n`;
+                    }
+
+                } else if (mainMode === 'certify') {
+                    const cTypeLabel = CERT_TYPES.find(t => t.id === certType).label;
+                    const cPersonLabel = PERSON_TYPES_1.find(p => p.id === certPerson).label;
+                    
+                    const attendeeStr = `${cTypeLabel} ${cPersonLabel}`;
+
+                    result += `【應到場人】\n${attendeeStr}\n\n`;
+
+                    result += `【應備文件】\n`;
+                    let baseDocsStr = '';
+                    if (certType === 'single') {
+                        baseDocsStr = '結婚人7日內在戶政事務所申請的戶籍謄本(建議全戶且記事不省略)、曾結婚者7日內在戶政事務所申請離婚證書或死亡證明、結婚對象身分證(存在手機)';
+                    } else if (certType === 'poa') {
+                        baseDocsStr = '委託授權書';
+                    } else if (['work', 'degree', 'police', 'household'].includes(certType)) {
+                        baseDocsStr = cTypeLabel;
+                    } else if (['passport', 'license', 'idcard'].includes(certType)) {
+                        baseDocsStr = cTypeLabel + '影本(自行選擇彩色或黑白影印，每一份都必須相同)';
+                    } else if (certType === 'translation') {
+                        baseDocsStr = '原件(經外館驗證)、翻譯文件(檔案經公證人確認翻譯正確無誤再列印)';
+                    } else if (certType === 'other') {
+                        baseDocsStr = '文件';
+                    }
+
+                    result += formatWithNewlines(baseDocsStr) + '\n';
+
+                    if (certRegion === 'mainland') {
+                        result += '至少帶5份來，帶走2份\n';
+                    } else if (certRegion === 'other_country') {
+                        result += '要帶走幾份，就多帶1份過來，最多帶6份來，帶走5份\n';
+                    }
+                    
+                    result += '\n';
+
+                    const personRuleText = PERSON_DOC_RULES[certPerson];
+                    result += formatWithNewlines(`${attendeeStr}${personRuleText}`) + '\n';
+
+                    if (certOtherDocs.trim()) {
+                        result += '\n' + certOtherDocs.trim() + '\n';
+                    }
+
+                    result += `\n【公證費用】\n預估認證費用新台幣${certFee || ' '}元\n`;
+                }
+
+                return result.trim();
+            }, [
+                mainMode, 
+                docType, person1, person2, additionalSelected, otherDocs, feeMode, manualFee,
+                certType, certPerson, certRegion, certOtherDocs, certFee
+            ]);
+
+            const output2Text = useMemo(() => {
+                if (mainMode === 'notarize') {
+                    return QUESTIONS_RULES[docType] || '無預設詢問事項';
+                }
+                return '';
+            }, [mainMode, docType]);
+
+            const handleCopy = (text, setStatus) => {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    setStatus(true);
+                    setTimeout(() => setStatus(false), 2000);
+                } catch (err) {
+                    console.error('複製失敗', err);
+                }
+                document.body.removeChild(textArea);
+            };
+
+            const handleCopyLine = (text, setStatusIndex, idx) => {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    setStatusIndex(idx);
+                    setTimeout(() => setStatusIndex(null), 2000);
+                } catch (err) {
+                    console.error('複製失敗', err);
+                }
+                document.body.removeChild(textArea);
+            };
+
+            return (
+                <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans text-slate-800">
+                    <div className="max-w-6xl mx-auto space-y-6">
+                        
+                        <header className="text-center mb-6">
+                            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">公證訊息例稿產生器</h1>
+                            <p className="text-slate-500 mt-2">快速勾選生成標準作業訊息，自動排版轉換頓號為換行。</p>
+                        </header>
+
+                        {/* 模式切換器 */}
+                        <div className="flex justify-center mb-8">
+                            <div className="bg-slate-200/60 p-1 rounded-xl shadow-inner inline-flex flex-wrap justify-center gap-1">
+                                <button
+                                    onClick={() => setMainMode('notarize')}
+                                    className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 ${
+                                        mainMode === 'notarize' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                                    }`}
+                                >
+                                    公證
+                                </button>
+                                <button
+                                    onClick={() => setMainMode('certify')}
+                                    className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 ${
+                                        mainMode === 'certify' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                                    }`}
+                                >
+                                    認證
+                                </button>
+                                <button
+                                    onClick={() => setMainMode('booking')}
+                                    className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 ${
+                                        mainMode === 'booking' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                                    }`}
+                                >
+                                    預約或轉介
+                                </button>
+                                <button
+                                    onClick={() => setMainMode('fee')}
+                                    className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 ${
+                                        mainMode === 'fee' ? 'bg-white text-amber-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                                    }`}
+                                >
+                                    費用
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            
+                            {/* 左側：輸入區 */}
+                            {mainMode === 'notarize' && (
+                                <div className="space-y-6">
+                                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                                        <div className="bg-indigo-50/50 px-5 py-4 border-b border-slate-200">
+                                            <h2 className="text-lg font-semibold text-indigo-900">一、應到場人 (公證)</h2>
+                                        </div>
+                                        <div className="p-5 space-y-5">
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 mb-2">1. 案件類型</label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {DOC_TYPES.map(type => (
+                                                        <button
+                                                            key={type.id}
+                                                            onClick={() => setDocType(type.id)}
+                                                            className={`px-4 py-2 rounded-lg text-sm transition-colors border ${
+                                                                docType === type.id 
+                                                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' 
+                                                                    : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
+                                                            }`}
+                                                        >
+                                                            {type.label}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-700 mb-2">2. 請求人1</label>
+                                                    <select 
+                                                        value={person1} 
+                                                        onChange={(e) => setPerson1(e.target.value)}
+                                                        className="w-full rounded-lg border-slate-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none border"
+                                                    >
+                                                        {PERSON_TYPES_1.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-700 mb-2">3. 請求人2</label>
+                                                    <select 
+                                                        value={person2} 
+                                                        onChange={(e) => setPerson2(e.target.value)}
+                                                        className="w-full rounded-lg border-slate-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none border"
+                                                    >
+                                                        {PERSON_TYPES_2.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 mb-2">4. 新增人別 (第三方)</label>
+                                                <div className="flex flex-wrap gap-3">
+                                                    {ADDITIONAL_ATTENDEES.map(att => (
+                                                        <label key={att.id} className="flex items-center space-x-2 cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={!!additionalSelected[att.id]}
+                                                                onChange={() => toggleAdditional(att.id)}
+                                                                className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500"
+                                                            />
+                                                            <span className="text-sm text-slate-700">{att.label}</span>
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                                        <div className="bg-indigo-50/50 px-5 py-4 border-b border-slate-200">
+                                            <h2 className="text-lg font-semibold text-indigo-900">二、其他補充文件</h2>
+                                        </div>
+                                        <div className="p-5">
+                                            <p className="text-xs text-slate-500 mb-3">基本文件已自動生成，若有其他補充事項請填寫於此：</p>
+                                            <textarea
+                                                value={otherDocs}
+                                                onChange={(e) => setOtherDocs(e.target.value)}
+                                                placeholder="補充文件或其他說明 (選填)"
+                                                className="w-full h-24 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none resize-none"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                                        <div className="bg-indigo-50/50 px-5 py-4 border-b border-slate-200">
+                                            <h2 className="text-lg font-semibold text-indigo-900">三、公證費用</h2>
+                                        </div>
+                                        <div className="p-5 space-y-4">
+                                            <div className="flex items-center space-x-4">
+                                                <label className="flex items-center space-x-2 cursor-pointer">
+                                                    <input
+                                                        type="radio"
+                                                        name="feeMode"
+                                                        value="default"
+                                                        checked={feeMode === 'default'}
+                                                        onChange={() => setFeeMode('default')}
+                                                        className="w-4 h-4 text-indigo-600 focus:ring-indigo-500"
+                                                    />
+                                                    <span className="text-sm text-slate-700">依類型預設</span>
+                                                </label>
+                                                <label className="flex items-center space-x-2 cursor-pointer">
+                                                    <input
+                                                        type="radio"
+                                                        name="feeMode"
+                                                        value="manual"
+                                                        checked={feeMode === 'manual'}
+                                                        onChange={() => setFeeMode('manual')}
+                                                        className="w-4 h-4 text-indigo-600 focus:ring-indigo-500"
+                                                    />
+                                                    <span className="text-sm text-slate-700">直接輸入金額</span>
+                                                </label>
+                                            </div>
+
+                                            {feeMode === 'manual' && (
+                                                <div className="flex items-center space-x-2">
+                                                    <span className="text-sm text-slate-600">新台幣</span>
+                                                    <input
+                                                        type="number"
+                                                        value={manualFee}
+                                                        onChange={(e) => setManualFee(e.target.value)}
+                                                        placeholder="例如: 8800"
+                                                        className="w-32 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                                                    />
+                                                    <span className="text-sm text-slate-600">元</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {mainMode === 'certify' && (
+                                <div className="space-y-6">
+                                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                                        <div className="bg-emerald-50/50 px-5 py-4 border-b border-slate-200">
+                                            <h2 className="text-lg font-semibold text-emerald-900">一、應到場人 (認證)</h2>
+                                        </div>
+                                        <div className="p-5 space-y-5">
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 mb-2">1. 案件類型</label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {CERT_TYPES.map(type => (
+                                                        <button
+                                                            key={type.id}
+                                                            onClick={() => setCertType(type.id)}
+                                                            className={`px-3 py-1.5 rounded-lg text-sm transition-colors border ${
+                                                                certType === type.id 
+                                                                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' 
+                                                                    : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
+                                                            }`}
+                                                        >
+                                                            {type.label}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 mb-2">2. 請求人</label>
+                                                <select 
+                                                    value={certPerson} 
+                                                    onChange={(e) => setCertPerson(e.target.value)}
+                                                    className="w-full md:w-1/2 rounded-lg border-slate-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none border"
+                                                >
+                                                    {PERSON_TYPES_1.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                                        <div className="bg-emerald-50/50 px-5 py-4 border-b border-slate-200">
+                                            <h2 className="text-lg font-semibold text-emerald-900">二、應備文件設定</h2>
+                                        </div>
+                                        <div className="p-5 space-y-5">
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 mb-3">1. 使用地區</label>
+                                                <div className="flex flex-col sm:flex-row gap-4">
+                                                    {CERT_REGIONS.map(region => (
+                                                        <label key={region.id} className="flex items-center space-x-2 cursor-pointer">
+                                                            <input
+                                                                type="radio"
+                                                                name="certRegion"
+                                                                value={region.id}
+                                                                checked={certRegion === region.id}
+                                                                onChange={() => setCertRegion(region.id)}
+                                                                className="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-emerald-500"
+                                                            />
+                                                            <span className="text-sm text-slate-700">{region.label}</span>
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 mb-2">2. 其他補充文件</label>
+                                                <textarea
+                                                    value={certOtherDocs}
+                                                    onChange={(e) => setCertOtherDocs(e.target.value)}
+                                                    placeholder="補充文件或其他說明 (選填)"
+                                                    className="w-full h-24 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none resize-none"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                                        <div className="bg-emerald-50/50 px-5 py-4 border-b border-slate-200">
+                                            <h2 className="text-lg font-semibold text-emerald-900">三、公證費用</h2>
+                                        </div>
+                                        <div className="p-5">
+                                            <div className="flex items-center space-x-2">
+                                                <span className="text-sm text-slate-600">預估費用新台幣</span>
+                                                <input
+                                                    type="number"
+                                                    value={certFee}
+                                                    onChange={(e) => setCertFee(e.target.value)}
+                                                    placeholder="例如: 750"
+                                                    className="w-32 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
+                                                />
+                                                <span className="text-sm text-slate-600">元</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {mainMode === 'booking' && (
+                                <div className="space-y-6">
+                                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                                        <div className="bg-blue-50/50 px-5 py-4 border-b border-slate-200">
+                                            <h2 className="text-lg font-semibold text-blue-900">一、確認預約</h2>
+                                        </div>
+                                        <div className="p-5 space-y-3">
+                                            <label className="block text-sm font-medium text-slate-700">請輸入日期時間 (純數字8碼)</label>
+                                            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
+                                                <input
+                                                    type="text"
+                                                    maxLength={8}
+                                                    value={bookingDateInput}
+                                                    onChange={(e) => setBookingDateInput(e.target.value.replace(/\D/g, ''))}
+                                                    placeholder="例如: 05041430"
+                                                    className="w-full sm:w-40 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none font-mono"
+                                                />
+                                                <span className="text-sm text-slate-500 font-medium text-blue-700">
+                                                    {/^\d{8}$/.test(bookingDateInput) ? parsedBookingDateStr : ''}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-slate-400">右側輸出區1將即時套用您的輸入產生確認文字。</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="bg-blue-50/20 p-5 rounded-xl border border-blue-100 text-sm text-blue-800">
+                                        預約資訊及轉介法院等常用文字，已準備於右側輸出區。
+                                    </div>
+                                </div>
+                            )}
+
+                            {mainMode === 'fee' && (
+                                <div className="space-y-6">
+                                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                                        <div className="bg-amber-50/50 px-5 py-4 border-b border-slate-200">
+                                            <h2 className="text-lg font-semibold text-amber-900">一、費用試算輸入</h2>
+                                        </div>
+                                        <div className="p-5 space-y-6">
+                                            
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 mb-2">1. 房屋現值 (元)</label>
+                                                <input
+                                                    type="number"
+                                                    value={houseValue}
+                                                    onChange={(e) => setHouseValue(e.target.value)}
+                                                    placeholder="輸入房屋現值"
+                                                    className="w-full md:w-1/2 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none"
+                                                />
+                                            </div>
+
+                                            <div className="pt-4 border-t border-slate-100">
+                                                <label className="block text-sm font-medium text-slate-700 mb-3">租金與押金輸入方式</label>
+                                                <div className="flex items-center space-x-6 mb-4">
+                                                    <label className="flex items-center space-x-2 cursor-pointer">
+                                                        <input
+                                                            type="radio"
+                                                            name="rentInputType"
+                                                            value="auto"
+                                                            checked={rentInputType === 'auto'}
+                                                            onChange={() => setRentInputType('auto')}
+                                                            className="w-4 h-4 text-amber-600 focus:ring-amber-500"
+                                                        />
+                                                        <span className="text-sm text-slate-700">月租金自動計算</span>
+                                                    </label>
+                                                    <label className="flex items-center space-x-2 cursor-pointer">
+                                                        <input
+                                                            type="radio"
+                                                            name="rentInputType"
+                                                            value="direct"
+                                                            checked={rentInputType === 'direct'}
+                                                            onChange={() => setRentInputType('direct')}
+                                                            className="w-4 h-4 text-amber-600 focus:ring-amber-500"
+                                                        />
+                                                        <span className="text-sm text-slate-700">直接輸入總額</span>
+                                                    </label>
+                                                </div>
+
+                                                {rentInputType === 'auto' ? (
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-amber-50/30 p-4 rounded-lg">
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-slate-600 mb-1">月租金 (元)</label>
+                                                            <input
+                                                                type="number"
+                                                                value={monthlyRent}
+                                                                onChange={(e) => setMonthlyRent(e.target.value)}
+                                                                placeholder="輸入月租金"
+                                                                className="w-full rounded border border-slate-300 px-3 py-1.5 text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-slate-600 mb-1">租期 (個月)</label>
+                                                            <input
+                                                                type="number"
+                                                                value={leaseTerm}
+                                                                onChange={(e) => setLeaseTerm(e.target.value)}
+                                                                placeholder="輸入月數"
+                                                                className="w-full rounded border border-slate-300 px-3 py-1.5 text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none"
+                                                            />
+                                                        </div>
+                                                        <div className="md:col-span-2 flex justify-between text-sm text-slate-500 mt-2 bg-white px-3 py-2 rounded border border-slate-200">
+                                                            <span>試算租金總額: <strong className="text-amber-700">{feeCalculationResult.vTotalRent}</strong></span>
+                                                            <span>試算押金(2個月): <strong className="text-amber-700">{feeCalculationResult.vDeposit}</strong></span>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-amber-50/30 p-4 rounded-lg">
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-slate-600 mb-1">2. 租金總額 (元)</label>
+                                                            <input
+                                                                type="number"
+                                                                value={totalRentInput}
+                                                                onChange={(e) => setTotalRentInput(e.target.value)}
+                                                                placeholder="輸入租金總額"
+                                                                className="w-full rounded border border-slate-300 px-3 py-1.5 text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-slate-600 mb-1">3. 押金 (元)</label>
+                                                            <input
+                                                                type="number"
+                                                                value={depositInput}
+                                                                onChange={(e) => setDepositInput(e.target.value)}
+                                                                placeholder="輸入押金"
+                                                                className="w-full rounded border border-slate-300 px-3 py-1.5 text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 右側：輸出區 */}
+                            <div className="space-y-6">
+                                
+                                {mainMode === 'booking' && (
+                                    <div className="space-y-6">
+                                        {/* 預約輸出區 1 */}
+                                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                                            <div className="bg-slate-100 px-5 py-3 border-b border-slate-200 flex justify-between items-center">
+                                                <h2 className="text-md font-semibold text-slate-800">輸出區 1 (確認預約)</h2>
+                                                <button
+                                                    onClick={() => handleCopy(outputBookingConfirmText, setCopyBookingConfirm)}
+                                                    className="flex items-center space-x-1 px-3 py-1.5 bg-white border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors"
+                                                >
+                                                    {copyBookingConfirm ? <CheckCircleIcon /> : <CopyIcon />}
+                                                    <span>{copyBookingConfirm ? '已複製' : '一鍵複製'}</span>
+                                                </button>
+                                            </div>
+                                            <div className="p-5 flex-grow bg-[#fafafa]">
+                                                <pre className="text-sm font-mono whitespace-pre-wrap text-slate-800 leading-relaxed">
+                                                    {outputBookingConfirmText}
+                                                </pre>
+                                            </div>
+                                        </div>
+
+                                        {/* 預約輸出區 2 */}
+                                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                                            <div className="bg-slate-100 px-5 py-3 border-b border-slate-200 flex items-center">
+                                                <h2 className="text-md font-semibold text-slate-800">輸出區 2 (預約資訊)</h2>
+                                            </div>
+                                            <div className="p-5 flex-grow bg-[#fafafa]">
+                                                <div className="space-y-3">
+                                                    {BOOKING_INFO_LIST.map((text, idx) => (
+                                                        <div key={idx} className="flex items-start justify-between p-3 bg-white border border-slate-200 rounded-lg shadow-sm">
+                                                            <span className="text-sm text-slate-700 whitespace-pre-wrap flex-grow leading-relaxed">{text}</span>
+                                                            <button
+                                                                onClick={() => handleCopyLine(text, setCopiedBookingInfoIndex, idx)}
+                                                                className="ml-3 flex-shrink-0 flex items-center space-x-1 px-2 py-1 bg-slate-50 border border-slate-300 rounded text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-blue-600 transition-colors"
+                                                            >
+                                                                {copiedBookingInfoIndex === idx ? <CheckCircleIcon className="w-3.5 h-3.5 text-green-500" /> : <CopyIcon className="w-3.5 h-3.5" />}
+                                                                <span>{copiedBookingInfoIndex === idx ? '已複製' : '複製'}</span>
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* 預約輸出區 3 */}
+                                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                                            <div className="bg-slate-100 px-5 py-3 border-b border-slate-200 flex items-center">
+                                                <h2 className="text-md font-semibold text-slate-800">輸出區 3 (轉介法院)</h2>
+                                            </div>
+                                            <div className="p-5 flex-grow bg-[#fafafa]">
+                                                <div className="space-y-4">
+                                                    {REFERRAL_INFO_LIST.map((text, idx) => (
+                                                        <div key={idx} className="flex items-start justify-between p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+                                                            <span className="text-sm text-slate-700 whitespace-pre-wrap flex-grow leading-relaxed">{text}</span>
+                                                            <button
+                                                                onClick={() => handleCopyLine(text, setCopiedReferralIndex, idx)}
+                                                                className="ml-4 flex-shrink-0 flex items-center space-x-1 px-2 py-1 bg-slate-50 border border-slate-300 rounded text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-blue-600 transition-colors"
+                                                            >
+                                                                {copiedReferralIndex === idx ? <CheckCircleIcon className="w-3.5 h-3.5 text-green-500" /> : <CopyIcon className="w-3.5 h-3.5" />}
+                                                                <span>{copiedReferralIndex === idx ? '已複製' : '複製'}</span>
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {mainMode === 'fee' && (
+                                    <div className="space-y-6">
+                                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                                            <div className="bg-slate-100 px-5 py-3 border-b border-slate-200 flex justify-between items-center">
+                                                <h2 className="text-md font-semibold text-slate-800">輸出區 (費用試算結果)</h2>
+                                                { !feeCalculationResult.isError && (
+                                                    <button
+                                                        onClick={() => handleCopy(feeCalculationResult.outputText, setCopyFeeResult)}
+                                                        className="flex items-center space-x-1 px-3 py-1.5 bg-white border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-amber-600 transition-colors"
+                                                    >
+                                                        {copyFeeResult ? <CheckCircleIcon /> : <CopyIcon />}
+                                                        <span>{copyFeeResult ? '已複製' : '一鍵複製'}</span>
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div className="p-5 flex-grow bg-[#fafafa]">
+                                                { feeCalculationResult.isError ? (
+                                                    <div className="text-red-500 font-medium">
+                                                        {feeCalculationResult.outputText}
+                                                    </div>
+                                                ) : (
+                                                    <pre className="text-sm font-mono whitespace-pre-wrap text-slate-800 leading-relaxed">
+                                                        {feeCalculationResult.outputText}
+                                                    </pre>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {(mainMode === 'notarize' || mainMode === 'certify') && (
+                                    <div className="space-y-6">
+                                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[500px]">
+                                            <div className="bg-slate-100 px-5 py-3 border-b border-slate-200 flex justify-between items-center">
+                                                <h2 className="text-md font-semibold text-slate-800">輸出區 1 (主要訊息)</h2>
+                                                <button
+                                                    onClick={() => handleCopy(output1Text, setCopyStatus1)}
+                                                    className={`flex items-center space-x-1 px-3 py-1.5 bg-white border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors ${mainMode === 'certify' ? 'hover:text-emerald-600' : 'hover:text-indigo-600'}`}
+                                                >
+                                                    {copyStatus1 ? <CheckCircleIcon /> : <CopyIcon />}
+                                                    <span>{copyStatus1 ? '已複製' : '一鍵複製'}</span>
+                                                </button>
+                                            </div>
+                                            <div className="p-5 flex-grow overflow-auto bg-[#fafafa]">
+                                                <pre className="text-sm font-mono whitespace-pre-wrap text-slate-800 leading-relaxed">
+                                                    {output1Text}
+                                                </pre>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[280px]">
+                                            <div className="bg-slate-100 px-5 py-3 border-b border-slate-200 flex justify-between items-center">
+                                                <h2 className="text-md font-semibold text-slate-800">輸出區 2 (詢問先行)</h2>
+                                                {mainMode === 'notarize' && (
+                                                    <button
+                                                        onClick={() => handleCopy(output2Text, setCopyStatus2)}
+                                                        className="flex items-center space-x-1 px-3 py-1.5 bg-white border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
+                                                    >
+                                                        {copyStatus2 ? <CheckCircleIcon /> : <CopyIcon />}
+                                                        <span>{copyStatus2 ? '已複製' : '一鍵複製'}</span>
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div className="p-5 flex-grow overflow-auto bg-[#fafafa]">
+                                                {mainMode === 'notarize' ? (
+                                                    <pre className="text-sm font-mono whitespace-pre-wrap text-slate-800 leading-relaxed">
+                                                        {output2Text}
+                                                    </pre>
+                                                ) : (
+                                                    <div className="space-y-3">
+                                                        {CERT_QUESTIONS.map((text, idx) => (
+                                                            <div key={idx} className="flex items-start justify-between p-3 bg-white border border-slate-200 rounded-lg shadow-sm">
+                                                                <span className="text-sm text-slate-700 whitespace-pre-wrap flex-grow">{text}</span>
+                                                                <button
+                                                                    onClick={() => handleCopyLine(text, setCopiedLineIndex, idx)}
+                                                                    className="ml-3 flex-shrink-0 flex items-center space-x-1 px-2 py-1 bg-slate-50 border border-slate-300 rounded text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-emerald-600 transition-colors"
+                                                                >
+                                                                    {copiedLineIndex === idx ? <CheckCircleIcon className="w-3.5 h-3.5 text-green-500" /> : <CopyIcon className="w-3.5 h-3.5" />}
+                                                                    <span>{copiedLineIndex === idx ? '已複製' : '複製'}</span>
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            );
         }
 
-        // Start
-        init();
-
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
