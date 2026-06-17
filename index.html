@@ -9,8 +9,8 @@
     <!-- 載入 React 與 ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <!-- 載入 Babel 以在瀏覽器中編譯 JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- 載入 Babel 以在瀏覽器中編譯 JSX (指定穩定版本以防錯誤) -->
+    <script src="https://unpkg.com/@babel/standalone@7.24.0/babel.min.js"></script>
     <style>
         body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; }
     </style>
@@ -18,7 +18,8 @@
 <body class="bg-slate-50 text-slate-800">
     <div id="root"></div>
 
-    <script type="text/babel">
+    <!-- 加上 data-presets="react" 明確指定預設集 -->
+    <script type="text/babel" data-presets="react">
         const { useState, useMemo } = React;
 
         // --- SVG 圖示組件 ---
