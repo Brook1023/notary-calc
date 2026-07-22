@@ -382,7 +382,8 @@
                 else if (target <= 20000000) fee = 12000;
                 else err = true;
 
-                const text = err ? "價額超過20,000,000元無法計算，請查閱標準表。" : `【公證費用】\n本件房屋現值${vH}元，與租金總額${vR}元比較，較高者加上押金${vD}元，本件價額${target}元，按公證費用標準表收基本費用${fee}元。`;
+                const suffix = (!houseValue || vH === 0) ? "（僅預估尚應確認房屋現值）" : "";
+                const text = err ? "價額超過20,000,000元無法計算，請查閱標準表。" : `【公證費用】\n本件房屋現值${vH}元，與租金總額${vR}元比較，較高者加上押金${vD}元，本件價額${target}元，按公證費用標準表收基本費用${fee}元${suffix}。`;
                 return { vR, vD, text, err };
             }, [houseValue, rentType, monthly, term, total, deposit]);
 
