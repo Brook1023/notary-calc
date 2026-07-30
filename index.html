@@ -358,6 +358,13 @@
             const [customText, setCustomText] = useState('');
             const [copied, setCopied] = useState(false);
 
+            // 超張費狀態
+            const [extraPages, setExtraPages] = useState('');
+            const [extraCopies, setExtraCopies] = useState('');
+            const [extraIsEdited, setExtraIsEdited] = useState(false);
+            const [extraCustomText, setExtraCustomText] = useState('');
+            const [extraCopied, setExtraCopied] = useState(false);
+
             const calcResult = useMemo(() => {
                 const vH = parseInt(houseValue) || 0;
                 let vR = 0, vD = 0;
@@ -389,8 +396,28 @@
 
             useEffect(() => { if (!isEdited) setCustomText(calcResult ? calcResult.text : ''); }, [calcResult, isEdited]);
 
+            // 超張費計算邏輯
+            const extraCalcResult = useMemo(() => {
+                const p = parseInt(extraPages);
+                const c = parseInt(extraCopies);
+                if (isNaN(p) || isNaN(c)) return null;
+
+                const excess = Math.max(0, p - 4);
+                const fee = excess * 50 * c;
+                
+                return {
+                    text: `公證書 2 頁，後附文書(契約) ${p} 頁，標準張數 6 頁，超過 ${excess} 頁*50元*正本 ${c} 份=超張費 ${fee} 元。`
+                };
+            }, [extraPages, extraCopies]);
+
+            useEffect(() => { 
+                if (!extraIsEdited) {
+                    setExtraCustomText(extraCalcResult ? extraCalcResult.text : ''); 
+                }
+            }, [extraCalcResult, extraIsEdited]);
+
             return (
-                <Card title="4. 租約公證費用試算" id="part4" icon={<CalculatorIcon />}>
+                <Card title="4. 租約公證費用與超張費試算" id="part4" icon={<CalculatorIcon />}>
                     <div className="flex flex-col lg:flex-row gap-6 p-6">
                         <div className="w-full lg:w-1/2 space-y-5">
                             <div>
@@ -442,6 +469,39 @@
                             />
                         </div>
                     </div>
+                    
+                    <div className="border-t border-slate-100 mx-6"></div>
+
+                    <div className="flex flex-col lg:flex-row gap-6 p-6">
+                        <div className="w-full lg:w-1/2 space-y-4">
+                            <h3 className="text-sm font-bold text-slate-700 mb-1">超張費試算</h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs text-slate-500 mb-1">後附文書(契約) 頁數</label>
+                                    <input type="number" value={extraPages} onChange={e=>setExtraPages(e.target.value)} placeholder="例：10" className="w-full rounded border px-3 py-2 text-sm focus:border-blue-500 outline-none"/>
+                                </div>
+                                <div>
+                                    <label className="block text-xs text-slate-500 mb-1">正本 份數</label>
+                                    <input type="number" value={extraCopies} onChange={e=>setExtraCopies(e.target.value)} placeholder="例：2" className="w-full rounded border px-3 py-2 text-sm focus:border-blue-500 outline-none"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="w-full lg:w-1/2 flex flex-col">
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-sm font-medium text-slate-700">超張費產出訊息 {extraIsEdited && <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded ml-2">已手動修改</span>}</span>
+                                <div className="space-x-2 flex items-center">
+                                    {extraIsEdited && <button onClick={() => { setExtraIsEdited(false); setExtraCustomText(extraCalcResult ? extraCalcResult.text : ''); }} className="text-xs text-slate-500 hover:text-slate-800 underline">捨棄修改</button>}
+                                    <CopyButton copied={extraCopied} onClick={() => { copyToClipboard(extraCustomText, () => setExtraCopied(true)); setTimeout(() => setExtraCopied(false), 2000); }} />
+                                </div>
+                            </div>
+                            <textarea 
+                                value={extraCustomText}
+                                onChange={(e) => { setExtraIsEdited(true); setExtraCustomText(e.target.value); }}
+                                className="w-full h-32 lg:h-full p-4 rounded-lg border border-slate-300 focus:border-blue-500 text-slate-800 outline-none resize-none font-mono text-sm leading-relaxed"
+                                placeholder="超張費試算結果將自動產生於此..."
+                            />
+                        </div>
+                    </div>
                 </Card>
             );
         }
@@ -453,7 +513,7 @@
                 { id: 'part1', name: '預約資訊', icon: <CalendarIcon /> },
                 { id: 'part2', name: '保存年限計算', icon: <ArchiveIcon /> },
                 { id: 'part3', name: '公證書排版', icon: <FileTextIcon /> },
-                { id: 'part4', name: '公證費用試算', icon: <CalculatorIcon /> },
+                { id: 'part4', name: '公證與超張費試算', icon: <CalculatorIcon /> },
             ];
 
             useEffect(() => {
